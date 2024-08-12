@@ -46,6 +46,24 @@ def plot_confusion_matrix(conf_matrix):
     plt.ylabel('True label')
 
     return heatmap
+
+
+def plot_images(images, labels, scores, num_images=12):
+
+    fig, axes = plt.subplots(num_images//4, num_images//3, figsize=(12,8))
+    for i, ax in enumerate(axes.flat):
+        image = images[i]
+        label = labels[i]
+        prediction = scores[i]
+        if i<len(images):
+            ax.imshow(image, cmap='gray')
+            ax.set_title(f"Label: {label}, Prediction: {prediction:.4f}")
+        ax.axis('off')
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.9)
+    return fig
+
     
 def evaluate_model(model, criterion, val_loader, device=None):
     if device is None:
@@ -71,18 +89,6 @@ def evaluate_model(model, criterion, val_loader, device=None):
         preds = (torch.tensor(val_preds_list[0]) > 0.5).float()
 
         val_acc = compute_accuracy(preds, torch.tensor(val_labels_list[0]))
-
-        # conf_matrix = confusion_matrix(val_labels_list[0], preds.numpy().tolist())
-        # heatmap = plot_confusion_matrix(conf_matrix)
-
-        # wandb.log({"confusion_matrix": wandb.Image(heatmap)})
-
-        # wandb.log({"confusion_matrix": wandb.plot.confusion_matrix(
-        #     probs=None,
-        #     y_true=val_labels_list[0],
-        #     preds=preds.numpy().tolist()[0],
-        #     class_names=['Close', 'Open'])
-        # })
 
     return val_loss, val_acc, val_eer
 
@@ -124,22 +130,16 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, ckpts_pat
 
         train_acc = compute_accuracy(preds, torch.tensor(train_labels_list[0]))
 
-
-        # print('preds: ', train_preds_list[0])
-        # print('labels: ', train_labels_list[0])
-
-        # print(train_acc, train_eer)
-
         val_loss, val_acc, val_eer = evaluate_model(model, criterion, val_loader, device=device)
 
         if logger:
-            wandb.log({"epoch": epoch, "loss": val_loss, "train_accuracy": train_acc, "train_eer": train_eer, \
+            wandb.log({"epoch": epoch, "train_loss": train_loss, "train_accuracy": train_acc, "train_eer": train_eer, \
                     "val_loss": val_loss, "val_accuracy": val_acc, "val_eer": val_eer})
         
         print(f"Epoch {epoch} || validation accuracy = {val_acc:.4f}, validation eer = {val_eer:.4f}")
         if scheduler:
-            # scheduler.step()
-            scheduler.step(val_eer)
+            scheduler.step()
+            # scheduler.step(val_eer)
 
 
         if val_eer < min_eer or val_eer < 0.01:
@@ -152,20 +152,30 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, ckpts_pat
     return model, min_eer
 
 
-def test_model(test_images, test_labels):
+def test_model(test_images, test_labels, plot=False, n_images=12, name=None):
 
     model = OpenEyesClassifier()
     test_acc = 0.0
     scores_list = []
+    imgs_list = []
 
     for image_path, label in zip(test_images, test_labels):
+        
         score = model.predict(image_path)
-        # print(score, label)
         scores_list.append(score)
+        if plot:
+            img = cv2.imread(image_path, 0)
+            imgs_list.append(img)
 
     test_eer = compute_eer(test_labels, scores_list)
     preds = (torch.tensor(scores_list) > 0.5).float()
     test_acc = compute_accuracy(preds, torch.tensor(test_labels))
+
+    if plot:
+        if name is None:
+            name='Testing_images'
+        plot_images(imgs_list, test_labels, scores_list, num_images=n_images)
+        plt.savefig(f'./figs/{name}.png')
 
     print(f"Testing accuracy = {test_acc:.4f}, testing eer = {test_eer:.4f}")
 
@@ -218,21 +228,21 @@ if __name__ == "__main__":
     model = OpenEyesClassifier().to(device)
 
     wandb.init(project="OpenEyes")
-    # logger = WandbLogger(name=name, \
-    #                      project="OpenEyesClassificator",)
-    # logger.watch(model = modelmodule, log='gradients',log_graph=True)
 
-    save_path = "exp/classifier_6/"
+
+    save_path = f"exp/classifier_23/"
     os.makedirs(save_path, exist_ok=True)
 
     criterion = nn.BCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=0.001)
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=15)
-    # early_stopping = EarlyStopping(patience=15, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=15)
 
-    trained_model, min_val_eer = train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=100, \
+    trained_model, min_val_eer = train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=40, \
                 ckpts_path=save_path, scheduler=scheduler, device=device, logger=True)
     
-
+    print(f'\nMin eval EER = {min_val_eer:.4f}\n')
+    # print(test_images)
+    test_model(val_images, val_labels)
     test_model(test_images, test_labels)
+
