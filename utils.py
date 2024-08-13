@@ -77,6 +77,6 @@ def shuffle_data(images, labels):
 
 
 def split_data(images, labels, seed):
-    train_images, temp_images, train_labels, temp_labels = train_test_split(images, labels, test_size=0.1, stratify=labels, random_state=seed)
+    train_images, temp_images, train_labels, temp_labels = train_test_split(images, labels, test_size=0.2, stratify=labels, random_state=seed)
     val_images, test_images, val_labels, test_labels = train_test_split(temp_images, temp_labels, test_size=0.5, stratify=temp_labels, random_state=seed)
     return train_images, val_images, test_images, train_labels, val_labels, test_labels

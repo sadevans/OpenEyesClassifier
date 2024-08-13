@@ -5,36 +5,29 @@ import os
 import torchvision
 
 
-class OpenEyesClassifier(nn.Module):
+class OpenEyesClassificator(nn.Module):
     def __init__(self):
-        super(OpenEyesClassifier, self).__init__()
+        super(OpenEyesClassificator, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding='same')
-        self.leaky_relu1 = nn.LeakyReLU(0.05)
-        # self.leaky_relu1 = nn.ReLU()
+        self.leaky_relu1 = nn.LeakyReLU(0.01)
 
         self.max_pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.dropout1 = nn.Dropout(0.25)
         
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding='same')
-        self.leaky_relu2 = nn.LeakyReLU(0.05)
-        # self.leaky_relu2 = nn.SiLU()
-        # self.leaky_relu2 = nn.ReLU()
+        self.leaky_relu2 = nn.LeakyReLU(0.01)
 
         self.max_pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.dropout2 = nn.Dropout(0.25)
         
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding='same')
-        self.leaky_relu3 = nn.LeakyReLU(0.05)
-        # self.leaky_relu3 = nn.SiLU()
-        # self.leaky_relu3 = nn.ReLU()
+        self.leaky_relu3 = nn.LeakyReLU(0.01)
 
         self.max_pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.dropout3 = nn.Dropout(0.4)
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(1152, 128) 
-        self.leaky_relu4 = nn.LeakyReLU(0.05)
-        # self.leaky_relu4 = nn.SiLU()
-        # self.leaky_relu4 = nn.ReLU()
+        self.fc1 = nn.Linear(1152, 128)
+        self.leaky_relu4 = nn.LeakyReLU(0.01)
 
         self.dropout4 = nn.Dropout(0.3)
         self.fc2 = nn.Linear(128, 1)
@@ -70,11 +63,8 @@ class OpenEyesClassifier(nn.Module):
         x = self.leaky_relu4(self.fc1(x))
         x = self.dropout4(x)
 
-        # x = self.sigmoid(self.fc2(x))
         x = self.fc2(x)
-        # return self.logsoftmax(x)
         return self.sigmoid(x)
-        # return self.softmax(x) 
 
     def predict(self, inpIm):
         image = cv2.imread(inpIm)

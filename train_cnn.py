@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from dataset import ImageTransform, EyeDataset
-from OpenEyesClassificator import OpenEyesClassifier
+from OpenEyesClassificator import OpenEyesClassificator
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from utils import *
@@ -52,10 +52,10 @@ def plot_images(images, labels, scores, num_images=12):
 
     fig, axes = plt.subplots(num_images//4, num_images//3, figsize=(12,8))
     for i, ax in enumerate(axes.flat):
-        image = images[i]
-        label = labels[i]
-        prediction = scores[i]
         if i<len(images):
+            image = images[i]
+            label = labels[i]
+            prediction = scores[i]
             ax.imshow(image, cmap='gray')
             ax.set_title(f"Label: {label}, Prediction: {prediction:.4f}")
         ax.axis('off')
@@ -148,13 +148,14 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, ckpts_pat
             print(f"Saved model with validation accuracy = {val_acc:.4f} and eer = {val_eer:.4f}")
 
 
+    torch.save(model.state_dict(), os.path.join(ckpts_path, "open_eyes_classifier.pth"))
     torch.save(model.state_dict(), "./open_eyes_classifier.pth")
     return model, min_eer
 
 
 def test_model(test_images, test_labels, plot=False, n_images=12, name=None):
 
-    model = OpenEyesClassifier()
+    model = OpenEyesClassificator()
     test_acc = 0.0
     scores_list = []
     imgs_list = []
@@ -203,8 +204,8 @@ def get_dataloaders():
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    open_dir = '/home/sadevans/space/CloseEyesClassifier/data/clustered_auto_tcne_CHECKED/open'
-    close_dir = '/home/sadevans/space/CloseEyesClassifier/data/clustered_auto_tcne_CHECKED/close'
+    open_dir = './dataset/dataset/open'
+    close_dir = './dataset/dataset/close'
 
 
     seed = 31
@@ -225,24 +226,24 @@ if __name__ == "__main__":
     train_loader, val_loader, test_loader = get_dataloaders()
     
 
-    model = OpenEyesClassifier().to(device)
+    model = OpenEyesClassificator().to(device)
 
-    wandb.init(project="OpenEyes")
+    wandb.init(project="EyesClassificator")
 
 
-    save_path = f"exp/classifier_23/"
+    save_path = f"model_exps/final_classificator/"
     os.makedirs(save_path, exist_ok=True)
 
     criterion = nn.BCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=0.001)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
+
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=15)
 
-    trained_model, min_val_eer = train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=40, \
+    trained_model, min_val_eer = train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=100, \
                 ckpts_path=save_path, scheduler=scheduler, device=device, logger=True)
     
     print(f'\nMin eval EER = {min_val_eer:.4f}\n')
-    # print(test_images)
-    test_model(val_images, val_labels)
-    test_model(test_images, test_labels)
+    test_model(val_images, val_labels, plot=True, name='Validation images for final model')
+    test_model(test_images, test_labels, plot=True, name='Testing images for final model')
 

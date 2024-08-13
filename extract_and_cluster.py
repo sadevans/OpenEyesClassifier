@@ -9,7 +9,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import numpy as np
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def split_dataset(dataset_path, destination_path):
     all_images = os.listdir(dataset_path)
@@ -63,7 +63,7 @@ def extract_and_cluster_imgs(images, saved_model_path, split, image_paths):
     kmeans_tcne = KMeans(n_clusters=2, random_state=42)
     clusters_tcne = kmeans_tcne.fit_predict(reduced_features)
 
-    organize_images_by_cluster(f'./data/dataset/{split}', image_paths, clusters_tcne, output_dir=f"cluster_images/{split}")
+    organize_images_by_cluster(f'./data/dataset/{split}', image_paths, clusters_tcne, output_dir=f"cluster_images/")
 
 
 
@@ -74,8 +74,8 @@ def extract_and_cluster_imgs(images, saved_model_path, split, image_paths):
     
 
 if __name__ == "__main__":
-    split_dataset('./data/EyesDataset', './data/dataset')
-    for split in ['train', 'val', 'test']:
-        images = get_images(f'./data/dataset/{split}')
-        image_paths = os.listdir(f'./data/dataset/{split}')
-        extract_and_cluster_imgs(images, '/home/sadevans/space/CloseEyesClassifier/models/autoencoder.pth', split, image_paths)
+    # split_dataset('./data/EyesDataset', './data/dataset')
+    # for split in ['train', 'val', 'test']:
+    images = get_images(f'./data/dataset/EyesDataset')
+    image_paths = os.listdir(f'./data/dataset/EyesDataset')
+    extract_and_cluster_imgs(images, './models/autoencoder.pth', image_paths)
