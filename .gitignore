@@ -164,5 +164,13 @@ exp/
 data/
 wandb/
 figs/
-models/
+# models/
 cluster_images/
+mod/
+model_exps/
+experiments/
+expirements_new/
+check_imgs.ipynb
+dataset/dataset/
+dataset/hard_cases/
+dataset/dataset_checked
