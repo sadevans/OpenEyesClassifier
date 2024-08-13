@@ -170,6 +170,7 @@ mod/
 model_exps/
 experiments/
 expirements_new/
+expirements_new_/
 check_imgs.ipynb
 dataset/dataset/
 dataset/hard_cases/
