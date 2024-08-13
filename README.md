@@ -1,7 +1,7 @@
 # OpenEyesClassificator
 Тестовое для VisionLabs на CV engineer
 
-Отчет о проделанной работе: 
+Отчет о проделанной работе: https://beautiful-fang-60a.notion.site/1eebfbe5a4d745cbb453dc318c373fac
 
 Создайте виртуальную среду:
 ```bash
@@ -28,3 +28,7 @@ from OpenEyesClassificator import OpenEyesClassificator
 model = OpenEyesClassificator()
 model.predict(inpIm)
 ```
+
+## Для воспроизводимости
+
+Распакуйте папку dataset.zip, которая находится в директории `dataset`. Также создайте директории для сохранения экспериментов.
